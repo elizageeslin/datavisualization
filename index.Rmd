@@ -1,0 +1,224 @@
+---
+title: "The State of Knitting"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(dplyr)
+library(knitr)
+library(readr)
+library(mltools)
+library(naniar) #for replace_with_na
+library(naivebayes)
+library(class)
+library(caret)
+library(MLmetrics)
+library(nnet)
+library(SmartEDA) #quick views
+library(lubridate) #grouping by start month
+library(corrplot)
+library(ggcorrplot)
+library(maps)
+```
+
+
+```{r}
+#reading in the data
+
+data <- read_csv("../DACSS 690V/pattern_details_cleaned.csv")
+
+#head(data)
+```
+
+
+## Sidebar {.sidebar}
+
+Knitting is an incredibly popular hobby. Websites such as Ravelry.com allow pattern designers to sell their patterns directly to knitters. This dashboard captures different aspects of pattern and pattern author data scraped from ravelry.com
+
+Preparing the dashboard based on the instructions given at @magallanes_reyes_data_2022, and @aden-buie_flexdashboard_2023. 
+
+You can find the code for this dashboard here: https://github.com/hchinander612/Lab01
+
+## Column {.tabset .tabset-fade}
+
+### Univariate Categorical Plot
+
+```{r}
+#reading in the data for univariate plot
+
+plot1data <- read_csv("../DACSS 690V/item_type_bar_graph.csv", show_col_types = FALSE)
+```
+
+
+```{r}
+#plot 1
+titleText='What are the most popular pattern types?'
+subtitleText='Count of the most popular patterng grouped by the type of item the pattern makes'
+sourceText='Source: Ravelry.com'
+x.AxisText="Item Type"
+y.AxisText="Count of Patterns"
+
+ggplot(data = plot1data, aes(x = reorder(item_type, desc(count)), y = count)) +
+        geom_bar(fill ="#2E475D", stat = 'identity') + 
+        labs(title=titleText
+             , subtitle = subtitleText
+             , x = x.AxisText
+             , y = y.AxisText
+             , caption = sourceText
+             , color="#213343") +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)
+              , panel.background = element_rect(fill = "#F6F9FC")) +
+        geom_text(aes(label = count)
+                    , vjust = 1.5
+                    , size = 3
+                    , color="#F6F9FC") +
+        geom_vline(xintercept = 4.5, color="#FF7A59", linetype = "dashed", size = 1) + 
+        geom_text(aes(label = 'Top 4 Categories Account for more than 50% of patterns.')
+            , x = 4.5
+            , y = 280
+            , vjust = -0.5
+            , hjust = -0.05
+            , size = 2.5
+            , color = "#FF7A59") 
+```
+
+### Numerical Histogram Plot
+
+```{r}
+#reading in the data for plot3
+
+plot3data <- read_csv("../DACSS 690V/price_histogram.csv", show_col_types = FALSE)
+
+# plot3 - filter currency to usd only and filter out all free patterns
+
+plot3data <- plot3data %>% filter(currency == "USD" & !is.na(price))
+
+# Calculate the mean price from the data
+mean_price <- mean(plot3data$price)
+```
+
+```{r}
+titleText='What is the distribution of pattern price?'
+subtitleText='For patterns that cost money, this graph looks at the distribution of prices in USD'
+sourceText='Source: Ravelry.com'
+x.AxisText='Pattern Price ($)'
+y.AxisText='Density'
+
+ggplot(data = plot3data, aes(x=price)) + 
+    geom_histogram(aes(y = after_stat(density)), bins = 15, fill = "#516F90") +
+    labs(title=titleText
+            , subtitle = subtitleText
+            , x = x.AxisText
+            , y = y.AxisText
+            , caption = sourceText
+            , color="#213343") + 
+    theme(panel.background = element_rect(fill = "#F6F9FC")) +
+    geom_vline(xintercept= mean(plot3data$price), color="#FF7A59", linetype = "dashed", size = 1) + 
+    geom_text(aes(label = 'Mean Price = $7.12 USD')
+            , x = 7
+            , y = 0.225
+            , vjust = -0.5
+            , hjust = -0.09
+            , size = 3.0
+            , color = "#FF7A59") 
+```
+
+### Categorical x Categorical Plot
+
+```{r}
+#reading in the data for cat-cat plot
+
+plot2data <- read_csv("../DACSS 690V/item_type_free_bar_graph.csv", show_col_types = FALSE)
+```
+
+```{r}
+#plot 2
+titleText='Breakdown of Free vs. Paid Patterns by Type'
+subtitleText='Not all pattern costs money; For the top 10 item types, what is the split between free patterns and paid patterns?'
+x.AxisText='Item Type'
+y.AxisText='Free or Paid (%)'
+fillText = 'Pattern Cost'
+sourceText='Source: Ravelry.com'
+
+
+ggplot(data = plot2data, aes(fill = cost, x = reorder(item_type, desc(count)), y = count)) +
+        geom_bar(position="fill", stat="identity") + 
+        labs(title=titleText
+             , subtitle = subtitleText
+             , caption = sourceText
+             , x = x.AxisText
+             , y = y.AxisText
+             , fill = fillText
+             , color="#213343") +
+        scale_fill_manual(values = c("#0FBFBF", "#FF7A59")) + 
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)
+              , panel.background = element_rect(fill = "#F6F9FC")) +
+         geom_text(aes(label = percent_label)
+                   , position = position_fill(vjust = 0.5)
+                   , color="#213343")
+```
+
+
+### Map Plot
+
+```{r}
+#reading in the data for map
+
+map_data <- read_csv("../DACSS 690V/map_data.csv", show_col_types = FALSE)
+world_coordinates <- map_data("world") 
+
+map_data <- merge(world_coordinates, map_data, by="region", all = TRUE)
+
+# Sort by group, then order
+map_data <- arrange(map_data, group, order)
+```
+
+```{r}
+# Calculate the center of each state for label placement
+country_centers <- map_data %>%
+  drop_na(label_lat) %>%
+  select('code','label_lat', 'label_long', 'authors_per_capita')
+
+# Add a dummy 'group' column to state_centers
+country_centers$group <- 1
+
+country_centers <- country_centers %>%
+  distinct()
+```
+
+
+```{r}
+titleText='Authors of Top Patterns per Capita'
+subtitleText='A look at the number of pattern authors per capita by country'
+x.AxisText="Latitude"
+y.AxisText="Longitude"
+sourceText='Nordic countries (Denmark, Finland and Norway) have the highest number of authers per capita. (Source: Ravelry.com)'
+fillText ='Authors per capita'
+
+# Create the choropleth map
+ggplot(map_data, aes(x = long, y = lat, group = group, fill = authors_per_capita)) +
+  geom_polygon(color = "#99AFC4") +
+  scale_fill_gradient(low = "#FCEAD7", high = "#FF7A59", na.value = "#DBE4ED") +
+  labs(title = titleText
+       , subtitle = subtitleText
+       , caption = (sourceText)
+       , x = x.AxisText
+       , y = y.AxisText
+       , fill = fillText
+       , color="#213343") +
+  theme(legend.position = c(0.05, 0.05) 
+      , legend.justification = c("left", "bottom")
+      , legend.box.just = "left"
+      , legend.margin = margin(6, 6, 6, 6)
+      , panel.background = element_rect(fill = "#F6F9FC")) +
+  geom_text(data = country_centers
+      , aes(x = label_long, y = label_lat, label = code)
+      , size = 1
+      , color = "#213343")
+
+```
