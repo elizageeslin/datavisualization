@@ -26,16 +26,6 @@ library(ggcorrplot)
 library(maps)
 ```
 
-
-```{r}
-#reading in the data
-
-data <- read_csv("../DACSS 690V/pattern_details_cleaned.csv")
-
-#head(data)
-```
-
-
 ## Sidebar {.sidebar}
 
 Knitting is an incredibly popular hobby. Websites such as Ravelry.com allow pattern designers to sell their patterns directly to knitters. This dashboard captures different aspects of pattern and pattern author data scraped from ravelry.com
@@ -51,7 +41,7 @@ You can find the code for this dashboard here: https://github.com/elizageeslin/d
 ```{r}
 #reading in the data for univariate plot
 
-plot1data <- read_csv("../DACSS 690V/item_type_bar_graph.csv", show_col_types = FALSE)
+plot1data <- read_csv("item_type_bar_graph.csv", show_col_types = FALSE)
 ```
 
 
@@ -92,7 +82,7 @@ ggplot(data = plot1data, aes(x = reorder(item_type, desc(count)), y = count)) +
 ```{r}
 #reading in the data for plot3
 
-plot3data <- read_csv("../DACSS 690V/price_histogram.csv", show_col_types = FALSE)
+plot3data <- read_csv("price_histogram.csv", show_col_types = FALSE)
 
 # plot3 - filter currency to usd only and filter out all free patterns
 
@@ -133,7 +123,7 @@ ggplot(data = plot3data, aes(x=price)) +
 ```{r}
 #reading in the data for cat-cat plot
 
-plot2data <- read_csv("../DACSS 690V/item_type_free_bar_graph.csv", show_col_types = FALSE)
+plot2data <- read_csv("item_type_free_bar_graph.csv", show_col_types = FALSE)
 ```
 
 ```{r}
@@ -169,7 +159,7 @@ ggplot(data = plot2data, aes(fill = cost, x = reorder(item_type, desc(count)), y
 ```{r}
 #reading in the data for map
 
-map_data <- read_csv("../DACSS 690V/map_data.csv", show_col_types = FALSE)
+map_data <- read_csv("map_data.csv", show_col_types = FALSE)
 world_coordinates <- map_data("world") 
 
 map_data <- merge(world_coordinates, map_data, by="region", all = TRUE)
@@ -192,7 +182,7 @@ country_centers <- country_centers %>%
 ```
 
 
-```{r}
+```{r,fig.height=6,fig.width=10}
 titleText='Authors of Top Patterns per Capita'
 subtitleText='A look at the number of pattern authors per capita by country'
 x.AxisText="Latitude"
