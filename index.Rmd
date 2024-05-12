@@ -42,7 +42,7 @@ Knitting is an incredibly popular hobby. Websites such as Ravelry.com allow patt
 
 Preparing the dashboard based on the instructions given at @magallanes_reyes_data_2022, and @aden-buie_flexdashboard_2023. 
 
-You can find the code for this dashboard here: https://github.com/hchinander612/Lab01
+You can find the code for this dashboard here: https://github.com/elizageeslin/datavisualization
 
 ## Column {.tabset .tabset-fade}
 
